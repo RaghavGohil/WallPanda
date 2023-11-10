@@ -1,18 +1,21 @@
-import tkinter as tk
+import customtkinter as ctk
 
-class App(tk.Tk):
-    def __init__(self,application_name):
+class App(ctk.CTk):
+    def __init__(self,application_name:str,application_geometry:str):
         super().__init__()
 
-        self.root = tk.Tk()
-        self.root.title(application_name)
-        self.root.geometry('800x600')
-        self.root.state('zoomed')
+        self.wm_title(application_name)
+        self.wm_geometry(application_geometry)
+        self.after(200,lambda:self.wm_state('zoomed'))
 
-        self.search_frame = tk.Frame(self.root)
-        self.search_frame.pack()
-        self.image_container_frame = tk.Frame(self.root)
+        self._set_appearance_mode('system')
+
+        self.search_frame = ctk.CTkFrame(self)
+        self.search_frame.pack(pady=20)
+        self.image_container_frame = ctk.CTkFrame(self)
         self.image_container_frame.pack()
 
-        self.search_bar = tk.Entry(self.search_frame)
-        self.search_bar.pack()
+        self.search_bar = ctk.CTkEntry(self.search_frame,font=('',15),placeholder_text='search',width=400,height=40)
+        self.search_bar.grid(row=0,column=0,padx=10)
+        self.search_button = ctk.CTkButton(self.search_frame,height=40,width=50)
+        self.search_button.grid(row=0,column=1)
