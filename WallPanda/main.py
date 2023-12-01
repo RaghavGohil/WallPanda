@@ -1,14 +1,14 @@
 import config
-from utils.gui import * 
-from utils.scraper import * 
+import utils.gui as gui
+import utils.scraper as scraper
 
 def search(search_string:str):
     search_string = search_string.replace(' ','-')
-    scraper = Scraper()
-    scraper.scrape_wallpaperaccess(config.APPLICATION_NAME,search_string) 
+    web_scraper = scraper.Scraper()
+    web_scraper.scrape_wallpaperaccess(config.APPLICATION_NAME,search_string) 
 
 def main():
-    application = App(config.APPLICATION_NAME,config.APPLICATION_GEOMETRY)
+    application = gui.App(config.APPLICATION_NAME,config.APPLICATION_GEOMETRY)
     application.mainloop()
     x = input('search:')
     search(x)
