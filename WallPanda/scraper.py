@@ -10,7 +10,6 @@ class Scraper:
         self.__headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
         }
-        self.halt_threads = False 
         self.stop_threads = False
         self.threads = []
         self.response_ok = True # gets response okay for a search
@@ -28,7 +27,6 @@ class Scraper:
                 img_url = 'https://wallpaperaccess.com' + img_src 
                 img = re.get(img_url)
                 img_file_name = config.APPLICATION_NAME + img_src.replace('/','-')
-                #self.halt_threads = True
                 file_manager.write_temp(img_file_name,img.content)
 
     def __generate_bs_response(self,site:str,search_string:str)->BeautifulSoup:

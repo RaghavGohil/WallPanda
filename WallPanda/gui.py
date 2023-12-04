@@ -70,25 +70,28 @@ class App(ctk.CTk):
         self.previous_button.grid(row=0,column=0, padx=30, pady=10)
 
         self.curr_page = 1
-        self.page_label = ctk.CTkLabel(self.navigation_frame,text="1")
+        self.page_label = ctk.CTkLabel(self.navigation_frame,text=self.curr_page)
         self.page_label.grid(row=0,column=1, padx=10, pady=10)
 
         self.next_button = ctk.CTkButton(self.navigation_frame,text="next",height=40,width=50,fg_color='#424242',command=lambda:self.next_page())
         self.next_button.grid(row=0,column=2, padx=30, pady=10)
 
     def search(self)->None:
+        self.buttons.clear()
         search_string = self.search_bar.get()
+        if search_string.strip() == '':
+            return
         self.web_scraper.scrape(search_string)
         self.search_results_label.configure(text=f'Search results for \'{search_string}\'')
 
     def create_button(self,path:str)->None:
         self.thread_lock.acquire()
-        image = ctk.CTkImage(Image.open(path),size=(230,135))
-        self.buttons.append(ctk.CTkButton(self.image_frame,height=150,width=244,text='',fg_color='#424242', image = image))
-        print(path)
-        if self.curr_img_column < config.IMG_ROWS: 
+        if self.curr_img_column != config.IMG_COLUMNS: 
+            image = ctk.CTkImage(Image.open(path),size=(230,135))
+            self.buttons.append(ctk.CTkButton(self.image_frame,height=150,width=244,text='',fg_color='#424242', image = image))
+            print(path)
             self.buttons[-1].grid(column=self.curr_img_column,row=self.curr_img_row,pady=10,padx=10)
-            self.curr_img_column +=1
+            self.curr_img_column += 1
             print(self.curr_img_column)
         else:
             self.curr_img_row += 1
