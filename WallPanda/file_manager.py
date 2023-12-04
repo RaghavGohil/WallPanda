@@ -18,7 +18,7 @@ def write_temp(file_name:str,content:str)->None:
     os.close(file_desc)
     gui_instance.create_button(path)
 
-def cleanup()->None:
+def clean_temp()->None:
     for path in file_paths:
         os.remove(path)
 

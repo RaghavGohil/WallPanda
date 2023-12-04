@@ -1,9 +1,9 @@
 import gui
-import button_generator
+import file_manager
 
 def main():
     application = gui.App()
-    button_generator.set_gui_instance(application)
+    file_manager.set_gui_instance(application)
     application.mainloop()
 
 main()

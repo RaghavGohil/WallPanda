@@ -1,4 +1,4 @@
-import button_generator
+import file_manager
 from bs4 import BeautifulSoup
 import threading
 import requests as re
@@ -10,6 +10,10 @@ class Scraper:
         self.__headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
         }
+        self.halt_threads = False 
+        self.stop_threads = False
+        self.threads = []
+        self.response_ok = True # gets response okay for a search
 
     def __scrape_wallpaperaccess(self,search_string:str):
 
@@ -19,15 +23,18 @@ class Scraper:
         bs_response = self.__generate_bs_response(site,search_string)
         img_tags = bs_response.find_all('img',{'data-slug':search_string})
         for img_tag in img_tags:
-            img_src = img_tag.attrs['data-src']
-            img_url = 'https://wallpaperaccess.com' + img_src 
-            img = re.get(img_url)
-            img_file_name = config.APPLICATION_NAME + img_src.replace('/','-')
-            button_generator.write_temp(img_file_name,img.content) # no locks as we are writing on diff files
+            if not self.stop_threads:    
+                img_src = img_tag.attrs['data-src']
+                img_url = 'https://wallpaperaccess.com' + img_src 
+                img = re.get(img_url)
+                img_file_name = config.APPLICATION_NAME + img_src.replace('/','-')
+                #self.halt_threads = True
+                file_manager.write_temp(img_file_name,img.content)
 
     def __generate_bs_response(self,site:str,search_string:str)->BeautifulSoup:
         site = site.format(search_string = search_string)
         response = re.get(site,headers=self.__headers)
+        self.response_ok = response.ok
         print(f'Response ok?: {response.ok}')
         bs_response = BeautifulSoup(response.text,'html.parser')
         return bs_response
@@ -36,5 +43,14 @@ class Scraper:
         if search_string == '':
             return
         search_string = search_string.strip()
-        th_scraper_wallpaper_access = threading.Thread(target=self.__scrape_wallpaperaccess,args=(search_string,))
-        th_scraper_wallpaper_access.start()
+        self.threads = [
+            threading.Thread(target=self.__scrape_wallpaperaccess,args=(search_string,))
+        ]
+        for thread in self.threads:
+            thread.start()
+
+    def stop_all_threads(self)->None:
+        self.stop_threads = True 
+    
+    def restart_threads(self)->None:
+        self.stop_threads = False 
