@@ -44,8 +44,8 @@ class App(ctk.CTk):
         self.search_results_frame = ctk.CTkFrame(self.image_and_button_frame,fg_color='transparent',width=1200)
         self.search_results_frame.pack(fill='x',expand=True)
 
-        self.search_results = ctk.CTkLabel(self.search_results_frame,font=('',20),text="Search your favourite anime character!")
-        self.search_results.pack(side='left',padx=30,pady=(20,10))
+        self.search_results_label = ctk.CTkLabel(self.search_results_frame,anchor='w',font=('',20),text='Search for your favorite movie/anime!',width=1200)
+        self.search_results_label.pack(padx=30,pady=(20,10))
 
         self.image_frame=ctk.CTkFrame(self.image_and_button_frame,fg_color='transparent')
         self.image_frame.pack(expand=True, fill="both",pady=0)
@@ -68,6 +68,7 @@ class App(ctk.CTk):
     def search(self,search_string:str)->None:
         web_scraper = scraper.Scraper()
         web_scraper.scrape(search_string)
+        self.search_results_label.configure(text=f'Search results for \'{search_string}\'')
     
     def create_button(self,path:str)->None:
         image = ctk.CTkImage(Image.open(path),size=(230,135))
