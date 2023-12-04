@@ -1,4 +1,4 @@
-import file_manager
+import button_generator
 from bs4 import BeautifulSoup
 import threading
 import requests as re
@@ -23,7 +23,7 @@ class Scraper:
             img_url = 'https://wallpaperaccess.com' + img_src 
             img = re.get(img_url)
             img_file_name = config.APPLICATION_NAME + img_src.replace('/','-')
-            file_manager.write_temp(img_file_name,img.content) # no locks as we are writing on diff files
+            button_generator.write_temp(img_file_name,img.content) # no locks as we are writing on diff files
 
     def __generate_bs_response(self,site:str,search_string:str)->BeautifulSoup:
         site = site.format(search_string = search_string)
@@ -33,6 +33,8 @@ class Scraper:
         return bs_response
 
     def scrape(self,search_string)->None:
+        if search_string == '':
+            return
         search_string = search_string.strip()
         th_scraper_wallpaper_access = threading.Thread(target=self.__scrape_wallpaperaccess,args=(search_string,))
         th_scraper_wallpaper_access.start()
