@@ -1,7 +1,7 @@
 import threading
 import customtkinter as ctk
 import file_manager
-from PIL import Image, ImageTk
+from PIL import Image
 import config
 import scraper
 
@@ -43,6 +43,7 @@ class App(ctk.CTk):
         self.search_frame = ctk.CTkFrame(self.main_frame,fg_color='transparent')
         self.search_frame.pack(pady=(0,20))
 
+        self.last_search = ''
         self.search_bar = ctk.CTkEntry(self.search_frame,font=('',15),placeholder_text='What\'s on your mind?',width=400,height=40)
         self.search_bar.grid(row=0,column=0,padx=10)
         self.search_button = ctk.CTkButton(self.search_frame,text="search",height=40,width=50,command=lambda: self.search(),fg_color="#424242")
@@ -62,6 +63,7 @@ class App(ctk.CTk):
 
         self.buttons = []
         self.curr_img_row = self.curr_img_column = 0
+        self.button_generator_thread = threading.Thread(target=self.web_scraper.create_buttons,args=(self,))
 
         self.navigation_frame=ctk.CTkFrame(self.main_frame,fg_color='transparent',width=1200)
         self.navigation_frame.pack()
@@ -77,15 +79,21 @@ class App(ctk.CTk):
         self.next_button.grid(row=0,column=2, padx=30, pady=10)
 
     def search(self)->None:
-        self.web_scraper.restart_threads()
+        search_string = self.search_bar.get()
+        if search_string.strip() == '' or self.last_search == search_string:
+            return
+        self.curr_img_column = self.curr_img_row = 0
         for button in self.buttons:
             button.destroy()
         self.buttons.clear()
-        search_string = self.search_bar.get()
-        if search_string.strip() == '':
-            return
         self.web_scraper.scrape(search_string)
+        if not self.button_generator_thread.is_alive():
+            self.web_scraper.can_create = True
+            self.button_generator_thread.daemon = True
+            self.button_generator_thread.start()
+        
         self.search_results_label.configure(text=f'Search results for \'{search_string}\'')
+        self.last_search = search_string
 
     def create_button(self,path:str)->None:
         self.thread_lock.acquire()
@@ -104,8 +112,9 @@ class App(ctk.CTk):
             self.image_frame.grid_columnconfigure(i, weight=1, minsize=200)
         
         if len(self.buttons) == config.IMG_PER_PAGE:
-            self.web_scraper.stop_all_threads()
+            self.web_scraper.can_create = False
 
+        file_manager.file_paths.pop()
         self.thread_lock.release()
     
     def next_page(self)->None:
