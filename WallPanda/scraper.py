@@ -14,7 +14,7 @@ class Scraper:
         self.can_create = True 
         self.threads = []
         self.button_generator_sleep_time = 0.2
-        self.stop_threads = False # stop threads when we have loaded a page 
+        self.pause_threads = False # pause threads when we have loaded a page 
 
     def __scrape_wallpaperaccess(self,search_string:str):
 
@@ -24,9 +24,8 @@ class Scraper:
         bs_response = self.__generate_bs_response(site,search_string)
         img_tags = bs_response.find_all('img',{'data-slug':search_string})
         for img_tag in img_tags:
-            if self.stop_threads:
-                while self.stop_threads:
-                    print('stopped')
+            if self.pause_threads:
+                while self.pause_threads:
                     time.sleep(0.2)
             img_src = img_tag.attrs['data-src']
             img_url = 'https://wallpaperaccess.com' + img_src 

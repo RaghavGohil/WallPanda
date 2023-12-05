@@ -1,4 +1,7 @@
 import threading
+from pathlib import Path
+import shutil
+import ctypes
 import customtkinter as ctk
 import file_manager
 from PIL import Image
@@ -64,6 +67,7 @@ class App(ctk.CTk):
         self.buttons = []
         self.curr_img_row = self.curr_img_column = 0
         self.button_generator_thread = threading.Thread(target=self.web_scraper.create_buttons,args=(self,))
+        self.web_scraper.threads.append(self.button_generator_thread)
 
         self.navigation_frame=ctk.CTkFrame(self.main_frame,fg_color='transparent',width=1200)
         self.navigation_frame.pack()
@@ -81,9 +85,11 @@ class App(ctk.CTk):
     def search(self)->None:
         file_manager.image_stack.clear()
         print(file_manager.image_stack)
-        search_string = self.search_bar.get()
+        search_string = self.search_bar.get().lower()
+        self.web_scraper.can_create = False
+
         self.web_scraper.can_create = True
-        self.web_scraper.stop_threads = False 
+        self.web_scraper.pause_threads = False 
         if search_string.strip() == '' or self.last_search == search_string:
             return
         self.curr_img_column = self.curr_img_row = 0
@@ -102,7 +108,7 @@ class App(ctk.CTk):
         self.thread_lock.acquire()
         if self.curr_img_column != config.IMG_COLUMNS: 
             image = ctk.CTkImage(Image.open(path),size=(230,135))
-            self.buttons.append(ctk.CTkButton(self.image_frame,height=150,width=244,text='',fg_color='#424242', image = image))
+            self.buttons.append(ctk.CTkButton(self.image_frame,height=150,width=244,text='',fg_color='#424242', image = image,command=lambda:self.download_and_set_window(path)))
             print(path)
             self.buttons[-1].grid(column=self.curr_img_column,row=self.curr_img_row,pady=10,padx=10)
             file_manager.image_stack.pop()
@@ -116,7 +122,7 @@ class App(ctk.CTk):
             self.image_frame.grid_columnconfigure(i, weight=1, minsize=200)
         
         if len(self.buttons) == config.IMG_PER_PAGE:
-            self.web_scraper.stop_threads = True
+            self.web_scraper.pause_threads = True
             self.web_scraper.can_create = False
 
         self.thread_lock.release()
@@ -130,3 +136,28 @@ class App(ctk.CTk):
     def on_exit(self)->None:
         file_manager.clean_temp()
         self.destroy()
+
+    def download_and_set_window(self,path:str)->None:
+        self.download_window=ctk.CTkToplevel(self)
+        self.download_window.geometry(config.APPLICATION_DNS_GEOMETRY_SIZE)
+        self.download_window.attributes('-topmost', 'true')
+        self.download_window.resizable(False,False)
+        self.download_window.iconbitmap('assets/logo.ico')
+        self.download_window.title("download/set image")
+        download_image = ctk.CTkImage(Image.open(path),size=(600,350))
+        self.photo_label = ctk.CTkLabel(self.download_window,image=download_image,text='')
+        self.photo_label.pack()
+
+        self.download_button = ctk.CTkButton(self.download_window,text="Download",height=40,width=200,fg_color='#424242',command=lambda:self.download_wallpaper(path))
+        self.download_button.pack(padx=10, pady=10)
+
+        self.set_button = ctk.CTkButton(self.download_window,text="Set as desktop",height=40,width=200,fg_color='#424242',command=lambda:self.set_wallpaper(path))
+        self.set_button.pack(padx=10, pady=(0,10))
+
+    def set_wallpaper(self,path:str)->None:
+        ctypes.windll.user32.SystemParametersInfoW(20, 0, path , 0)
+    
+    def download_wallpaper(self,path:str)->None:
+        self.destination = str(Path.home() / "Downloads")
+        self.source=path
+        shutil.copy(self.source, self.destination)
