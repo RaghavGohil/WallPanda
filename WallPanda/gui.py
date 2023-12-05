@@ -79,7 +79,11 @@ class App(ctk.CTk):
         self.next_button.grid(row=0,column=2, padx=30, pady=10)
 
     def search(self)->None:
+        file_manager.image_stack.clear()
+        print(file_manager.image_stack)
         search_string = self.search_bar.get()
+        self.web_scraper.can_create = True
+        self.web_scraper.stop_threads = False 
         if search_string.strip() == '' or self.last_search == search_string:
             return
         self.curr_img_column = self.curr_img_row = 0
@@ -88,7 +92,6 @@ class App(ctk.CTk):
         self.buttons.clear()
         self.web_scraper.scrape(search_string)
         if not self.button_generator_thread.is_alive():
-            self.web_scraper.can_create = True
             self.button_generator_thread.daemon = True
             self.button_generator_thread.start()
         
@@ -102,6 +105,7 @@ class App(ctk.CTk):
             self.buttons.append(ctk.CTkButton(self.image_frame,height=150,width=244,text='',fg_color='#424242', image = image))
             print(path)
             self.buttons[-1].grid(column=self.curr_img_column,row=self.curr_img_row,pady=10,padx=10)
+            file_manager.image_stack.pop()
             self.curr_img_column += 1
             print(self.curr_img_column)
         else:
@@ -112,9 +116,9 @@ class App(ctk.CTk):
             self.image_frame.grid_columnconfigure(i, weight=1, minsize=200)
         
         if len(self.buttons) == config.IMG_PER_PAGE:
+            self.web_scraper.stop_threads = True
             self.web_scraper.can_create = False
 
-        file_manager.file_paths.pop()
         self.thread_lock.release()
     
     def next_page(self)->None:
