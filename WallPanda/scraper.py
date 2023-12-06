@@ -11,10 +11,11 @@ class Scraper:
         self.__headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS Xjj 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
         }
-        self.can_create = True 
+        self.pause_threads = False 
+        self.stop_threads = False
         self.threads = []
+        self.scaper_sleep_time = 0.2
         self.button_generator_sleep_time = 0.2
-        self.pause_threads = False # pause threads when we have loaded a page 
 
     def __scrape_wallpaperaccess(self,search_string:str):
 
@@ -24,9 +25,11 @@ class Scraper:
         bs_response = self.__generate_bs_response(site,search_string)
         img_tags = bs_response.find_all('img',{'data-slug':search_string})
         for img_tag in img_tags:
+            if self.stop_threads:
+                return
             if self.pause_threads:
                 while self.pause_threads:
-                    time.sleep(0.2)
+                    time.sleep(self.scaper_sleep_time)
             img_src = img_tag.attrs['data-src']
             img_url = 'https://wallpaperaccess.com' + img_src 
             img = re.get(img_url)
@@ -46,7 +49,6 @@ class Scraper:
         search_string = search_string.strip()
         self.threads = [
             threading.Thread(target=self.__scrape_wallpaperaccess,args=(search_string,)),
-            threading.Thread(target=self.__scrape_wallpaperaccess,args=(search_string,))
         ]
         for thread in self.threads:
             thread.daemon = True # kill all threads when the main program ends
@@ -54,7 +56,7 @@ class Scraper:
 
     def create_buttons(self,gui_instance)->None:
         while True:
-            if len(file_manager.image_stack) != 0 and self.can_create:
+            if len(file_manager.image_stack) != 0 and not self.pause_threads:
                 path = file_manager.image_stack[-1].replace('\\\\','/')
                 gui_instance.create_button(path)
             time.sleep(self.button_generator_sleep_time)
